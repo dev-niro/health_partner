@@ -1,0 +1,11 @@
+# Archivos de entorno
+.env
+.env.local
+.env.*.backup
+
+# Archivos de Python
+__pycache__/
+*.pyc
+
+# Entornos virtuales
+venv/

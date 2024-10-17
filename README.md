@@ -1,0 +1,2 @@
+# health_partner
+Health Partner is a telegram chat bot designed to enhance waiting time efficiency and provide personalized support throughout the entire service process. With quick responses and continuous assistance, it helps manage inquiries and optimize the user experience at every stage.
