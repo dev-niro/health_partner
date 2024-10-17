@@ -1,10 +1,8 @@
 import os
-import json
-import requests
 from telegram import Update
 from dotenv import load_dotenv
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
-from openai import OpenAI
+from together import Together
 
 # Función para responder al comando /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -14,33 +12,35 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text("Puedes usar los siguientes comandos:\n/start - Iniciar el bot\n/help - Obtener ayuda")
 
-# Función para responder a cualquier mensaje de texto
+# Función para manejar cualquier mensaje de texto y procesarlo con Together API
 async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    base_url = "https://api.aimlapi.com/v1"
-    api_key = "8752382bffb4404296f3b4dfa20ac5f9"
-    system_prompt = "You are a travel agent. Be descriptive and helpful."
-    user_prompt = "Tell me about San Francisco"
+    
+    client = Together()
 
-    api = OpenAI(api_key=api_key, base_url=base_url)
-    completion = api.chat.completions.create(
-        model="mistralai/Mistral-7B-Instruct-v0.2",
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ],
-        temperature=0.7,
-        max_tokens=256,
+    # Inicializa la variable para acumular la respuesta
+    text_response = ""
+
+    # Crea la solicitud para Together API
+    response = client.chat.completions.create(
+        model="meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+        messages=[{"role": "user", "content": update.message.text}],
+        stream=True,
     )
 
-    response = completion.choices[0].message.content
-
-    print("User:", user_prompt)
-    print("AI:", response)
-    await update.message.reply_text(response)
+    # Procesa el stream y acumula la respuesta
+    for chunk in response:
+        text_response += chunk.choices[0].delta.content or ""  # Acumula el contenido de cada fragmento
+    
+    # Enviar la respuesta completa al usuario
+    await update.message.reply_text(text_response)
 
 # Función principal para ejecutar el bot
 if __name__ == '__main__':
-    token = os.getenv("BOT_TOKEN")  # Reemplaza con tu token de BotFather
+    # Carga el archivo .env donde tienes almacenado tu token de BotFather
+    load_dotenv()
+    token = os.getenv("BOT_TOKEN")  # Asegúrate de que la variable BOT_TOKEN esté en tu archivo .env
+    
+    # Inicializa el bot de Telegram
     app = ApplicationBuilder().token(token).build()
 
     # Agregar handlers para los comandos
