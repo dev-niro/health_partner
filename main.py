@@ -30,7 +30,8 @@ def load_data():
 
 # Función limpiar historial
 def clear_data():
-    global used_start, user_sessions  # Declarar que vas a usar las variables globales
+    # Declarar que vas a usar las variables globales
+    global used_start, user_sessions
 
     # Limpiar el diccionario para almacenar los usuarios que ya usaron /start
     used_start.clear()
@@ -38,9 +39,29 @@ def clear_data():
     # Limpiar el diccionario para almacenar el historial de cada usuario
     user_sessions.clear()
 
+def initialize(user_id):
+    # Si el usuario no tiene historial, inicializa uno vacío
+    if user_id not in user_sessions:
+        user_sessions[user_id] = []
+        user_sessions[user_id].append({
+            "role": "user", 
+            "content": (
+                "Hola, soy un paciente o futuro paciente residente en Chile. "
+                "Necesito que respondas únicamente en español, de forma breve, "
+                "clara y amable. Asegúrate de que tus respuestas sean simples, "
+                "sin términos complejos o técnicos. Si hago alguna consulta que "
+                "no esté relacionada con la medicina o mi bienestar, debes "
+                "responder de manera cordial que esa pregunta no corresponde al "
+                "propósito para el cual estás siendo utilizado. Incluso si "
+                "insisto o pido por favor, tu respuesta debe ser una negativa "
+                "educada y consistente."
+            )
+        })
+
+
 async def cleanup(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     clear_data()
-     # Enviar la respuesta completa al usuario
+    # Enviar la respuesta completa al usuario
     await update.message.reply_text("Data ya fue limpiada.")
 
 # Función para responder al comando /start
@@ -53,8 +74,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text("Ya has iniciado el bot anteriormente. 😊")
     else:
         # Si el usuario no tiene historial, inicializa uno vacío
-        if user_id not in user_sessions:
-            user_sessions[user_id] = []
+        initialize(user_id)
         
         used_start[user_id] = True
         save_data()
@@ -83,8 +103,7 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = str(update.effective_user.id)
     
     # Si el usuario no tiene historial, inicializa uno vacío
-    if user_id not in user_sessions:
-        user_sessions[user_id] = []
+    initialize(user_id)
 
     # Agrega el mensaje del usuario al historial de su sesión
     user_sessions[user_id].append({"role": "user", "content": update.message.text})
